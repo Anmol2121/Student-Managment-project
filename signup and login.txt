@@ -1,0 +1,807 @@
+from tkinter import *
+from tkinter import ttk
+from tkinter import messagebox
+import mysql.connector
+
+def main_window():
+    win = Tk()
+    app = login(win)
+    win.mainloop()
+
+
+class login:
+    def __init__(self,root):
+        self.root=root
+        self.root.title('Login')
+        self.root.geometry('1550x800+0+0')
+
+        lb = Label(self.root,bg='black')
+        lb.place(x=0,y=0,relwidth=1,relheight=1)
+
+
+        frame =Frame(self.root,bg='black')
+        frame.place(x=450,y=155,width=330,height=400)
+
+        st = Label(self.root,text='Admin',font=('times new roman',25,'bold'),bg='black',fg='white')
+        st.place(x=540,y=170)
+
+        name=Label(self.root,text='username',bg ='black',fg='white',font=('times new roman',15,'bold'))
+        name.place(x=500,y=250)
+
+        pss = Label(self.root,text='password',bg='black',fg='white',font=('times new roman',15,'bold'))
+        pss.place(x=500,y=310)
+
+        self.var_email = StringVar()
+        self.et1 = ttk.Entry(self.root,width=26,textvariable=self.var_email)
+        self.et1.place(x=500,y=276)
+
+        self.var_pass = StringVar()
+        self.et2 = ttk.Entry(self.root,width=26,textvariable=self.var_pass)
+        self.et2.place(x=500,y=336)
+
+        bt = Button(self.root,text='Login',font=('times new roman',10,'bold'),bd=3,bg='red',fg='white',activeforeground='white',activebackground='red',command=self.Login)
+        bt.place(x=500,y=380)
+
+        lbl = Label(self.root,text='----------or-------------',font=('times new roman',15,'bold'),bg = 'black',fg='white')
+        lbl.place(x=500,y=420)
+        
+        
+        rg = Button(self.root,text="Don't have an account? Sign up",command=self.register_win,font=('times new roman',10,'bold'),borderwidth=0,bg='black',fg='white',activeforeground='white',activebackground='black')
+        rg.place(x=500,y=460)
+
+        
+        password = Button(self.root,text='Forget Password',font=('times new roman',10,'bold'),command=self.forget_password_window,borderwidth=0,bg='black',fg='white',activeforeground='white',activebackground='black')
+        password.place(x=500,y=500)
+#=============================================================================================
+
+    def register_win(self):
+        self.new_window=Toplevel(self.root)
+        self.app=register(self.new_window)
+        
+
+
+    def Login(self):
+      if self.et1.get()=="" or self.et2.get()=="":
+          messagebox.showerror('Error','all field required')
+      elif self.et1.get()=="anmol" and self.et2.get()=="1234":
+          messagebox.showinfo('seccess','welcome')
+      else:
+          conn=mysql.connector.connect(host='localhost',user='root',password='',database = 'school')
+          mycursor=conn.cursor()
+          mycursor.execute('select * from register_data where email=%s and password=%s',(self.var_email.get(),self.var_pass.get()))
+          row = mycursor.fetchone()
+          if row==None:
+              messagebox.showerror('Error','Invalid Username & password')
+          else:
+                open_main=messagebox.askyesno('YesNo','Access only Admin')
+                if open_main>0:
+                    self.new_window=Toplevel(self.root)
+                    self.app=Student(self.new_window)
+                else:
+                    if not open_main:
+                        return
+                conn.commit()
+                conn.close()
+
+#=========================================reset pss============================================
+
+    def reset_pass(self):
+        if self.combo_security_Q.get()=="select":
+            messagebox.showerror('Error','select the security question',parent=self.root2)
+        elif self.txt_security.get()=="":
+            messagebox.showerror('Error','Please enter the answer',parent=self.root2)
+        elif self.txt_newpass.get()=="":
+            messagebox.showerror('Error','Please enter the new password',parent=self.root2)
+        else:
+            conn=mysql.connector.connect(host='localhost',user='root',password='',database = 'school')
+            mycursor=conn.cursor()
+            query = ('select * from register_data where email=%s and securityQ=%s and securityA=%s')
+            value = (self.var_email.get(),self.combo_security_Q.get(),self.txt_security.get())
+            mycursor.execute(query,value)
+            row = mycursor.fetchone()
+            if row==None:
+                messagebox.showerror('Error','please enter correct answer',parent=self.root2)
+            else:
+                query = ('update register_data set password=%s where email=%s')
+                value =(self.txt_newpass.get(),self.var_email.get())
+                mycursor.execute(query,value)
+                conn.commit()
+                conn.close()
+                messagebox.showinfo('info','your password has been reset,please login with new password')
+    
+#===============================fg pss=========================================================
+    def forget_password_window(self):
+            if self.var_email.get()=="":
+                messagebox.showerror('Error','Please Enter the Email to reset password')
+            else:
+                conn=mysql.connector.connect(host='localhost',user='root',password='',database = 'school')
+                mycursor=conn.cursor()
+                query=('select * from register_data where email=%s')
+                values=(self.var_email.get(),)
+                mycursor.execute(query,values)
+                row = mycursor.fetchone()
+                print(row)
+
+                if row==None:
+                    messagebox.showerror('My Error','Please Enter the valid user name')
+                else:
+                    conn.close()
+                    self.root2=Toplevel()
+                    self.root2.title('Forget Password')
+                    self.root2.geometry('340x450+610+170')
+
+                    l = Label(self.root2,text='Forget Password',font=('times new roman',15,'bold'),bg='white',fg='red')
+                    l.place(x=0,y=10,relwidth=1)
+
+                    security_Q= Label(self.root2,text='Select Security Questions',font=('times new roman',15,'bold'),bg='white')
+                    security_Q.place(x=50,y=80)
+                    
+
+        
+        
+                    
+                    self.combo_security_Q = ttk.Combobox(self.root2,font=('times new roman',15,'bold'))
+                    self.combo_security_Q['state']=('readonly')
+                    self.combo_security_Q['values']=('select','your Birth place','your friend name','your pet name')
+                    self.combo_security_Q.place(x=50,y=110)
+                    self.combo_security_Q.current(0)
+        
+
+        
+
+                    security_A = Label(self.root2,text='Security Answer',font=('times new roman',15,'bold'),bg='white')
+                    security_A.place(x=50,y=150)
+
+                    self.txt_security = ttk.Entry(self.root2,font=('times new roman',15,'bold'))
+                    self.txt_security .place(x=50,y=179)
+
+
+
+
+                    new_password = Label(self.root2,text='New Password',font=('times new roman',15,'bold'),bg='white')
+                    new_password.place(x=50,y=219)
+
+                    self.txt_newpass = ttk.Entry(self.root2,font=('times new roman',15,'bold'))
+                    self.txt_newpass.place(x=50,y=250)
+
+
+
+
+
+                    bt_button = Button(self.root2,text='Reset',font=('times new roman',10,'bold'),command=self.reset_pass,bg='green',fg='white')
+                    bt_button.place(x=50,y=290)
+
+                    
+            
+
+                    
+                    
+
+
+#============================Register class=====================================
+
+
+class register:
+    def __init__(self,root):
+        self.root=root
+        self.root.title('Register')
+        self.root.geometry('1500x800+0+0')
+
+       # global a,b,c,d,e,f,g
+        '''a = self.var_fname.get()
+        b = self.var_lname.get()
+        c = self.var_contact.get()
+        d = self.var_email.get()
+        e = self.var_sc.get()
+        f = self.var_securitya.
+        g = self.var_password'''
+
+        
+
+        label = Label(self.root,bg='black')
+        label.place(x=0,y=0,relwidth=1,relheight=1)
+
+        frame = Frame(self.root,bg='white')
+        frame.place(x=370,y=155,width=500,height=500)
+
+        reg_lb=Label(frame,text='REGISTER HERE',font=('times new roman',18,'bold'),fg='green',bg = 'white')
+        reg_lb.place(x=120,y=10)
+
+        lb1 = Label(frame,text='First Name',font=('times new roman',15,'bold'),bg='white')
+        lb1.place(x=20,y=80)
+        
+        self.var_fname=StringVar()
+        self.et1 = ttk.Entry(frame,font=('times new roman',15,'bold'),textvariable=self.var_fname)
+        self.et1.place(x=20,y=110)
+        
+
+        lb2 = Label(frame,text='Last Name',font=('times new roman',15,'bold'),bg='white')
+        lb2.place(x=280,y=80)
+        
+        
+        self.var_lname=StringVar()
+        self.et2 = ttk.Entry(frame,font=('times new roman',15,'bold'),textvariable=self.var_lname)
+        self.et2.place(x=280,y=110)
+
+        
+
+        lb3 = Label(frame,text='Contact No.',font=('times new roman',15,'bold'),bg= 'white')
+        lb3.place(x=20,y=150)
+
+        
+       
+        self.var_contact=StringVar()
+        self.et3 = ttk.Entry(frame,font=('times new roman',15,'bold'),textvariable=self.var_contact)
+        self.et3.place(x=20,y=180)
+
+        
+
+        lb4 = Label(frame,text='Email',font=('times new roman',15,'bold'),bg='white')
+        lb4.place(x=280,y=150)
+
+        
+
+        
+        self.var_email=StringVar()
+        self.et4 = ttk.Entry(frame,font=('times new roman',15,'bold'),textvariable=self.var_email)
+        self.et4.place(x=280,y=180)
+
+        
+
+        lb5 = Label(frame,text='Select Security Questions',font=('times new roman',15,'bold'),bg='white')
+        lb5.place(x=20,y=220)
+
+
+        
+        
+        self.var_sc=StringVar()
+        self.com = ttk.Combobox(frame,font=('times new roman',15,'bold'),textvariable=self.var_sc)
+        self.com['state']=('readonly')
+        self.com['values']=('select','your Birth place','your friend name','your pet name')
+        self.com.place(x=20,y=250)
+        
+
+        
+
+        lb6 = Label(frame,text='Security Answer',font=('times new roman',15,'bold'),bg='white')
+        lb6.place(x=280,y=220)
+
+
+        
+        
+        self.var_securitya=StringVar()
+        self.et6 = ttk.Entry(frame,font=('times new roman',15,'bold'),textvariable=self.var_securitya)
+        self.et6.place(x=280,y=250)
+       
+
+        
+
+        lb7 = Label(frame,text=' Password',font=('times new roman',15,'bold'),bg = 'white')
+        lb7.place(x=20,y=290)
+
+
+        
+
+          
+        self.var_password=StringVar()
+        self.et8 = ttk.Entry(frame,font=('times new roman',15,'bold'),textvariable=self.var_password)
+        self.et8.place(x=280,y=320)
+
+        
+
+        lb8 = Label(frame,text='Confirm Password',font=('times new roman',15,'bold'),bg='white')
+        lb8.place(x=280,y=290)
+
+        self.var_cpassword=StringVar()
+        self.et7 = ttk.Entry(frame,font=('times new roman',15,'bold'),textvariable=self.var_cpassword)
+        self.et7.place(x=20,y=320)
+
+        
+       
+        
+
+        
+
+        
+
+        
+
+        
+
+        #self.et5 = ttk.Entry(frame,font=('times new roman',15,'bold'))
+        #self.et5.place(x=20,y=250)
+
+        
+
+        
+
+        
+
+        
+
+        #self.var_cheak = StringVar()
+        #self.chk = Checkbutton(frame,text='I Agree The Terms & Condition ',font=('times new roman',10,'bold'),bg='white',fg='black',activeforeground='white',activebackground='white',textvariable=self.var_cheak)
+        #self.chk.place(x=20,y=360)
+
+        self.bt1 = Button(frame,text='Signup',font=('times new roman',10,'bold'),command=self.register_data,bg='green')
+        self.bt1.place(x=20,y=370)
+
+        
+
+
+
+    def register_data(self):
+        if self.var_fname.get()=="" or self.var_email.get()=="" or self.var_sc.get()=="" or self.var_contact.get()== "":
+            messagebox.showwarning('Error','All field are required')
+        elif self.var_password.get()!=self.var_cpassword.get():
+            messagebox.showerror('Error','password & conifrm password must be same')
+        #elif self.var_cheak.get()=="":
+             #messagebox.showerror('Error','Please agree our term an condition')
+        
+        else:
+            conn=mysql.connector.connect(host='localhost',user='root',password='',database = 'school')
+            mycursor=conn.cursor()
+            query = ('select * from register_data where email=%s')
+            value=(self.var_email.get(),)
+            mycursor.execute(query,value)
+            row =mycursor.fetchone()
+            if row!=None:
+                messagebox.showerror('Error','User alrady exists,Please try another email')
+            else:
+                mycursor.execute('insert into register_data values(%s,%s,%s,%s,%s,%s,%s)',(
+                                                                                                                                                                        self.var_fname.get(),
+                                                                                                                                                                        self.var_lname.get(),
+                                                                                                                                                                        self.var_contact.get(),
+                                                                                                                                                                        self.var_email.get(),
+                                                                                                                                                                        self.var_sc.get(),
+                                                                                                                                                                        self.var_securitya.get(),
+                                                                                                                                                                        self.var_password.get(),
+                                                                                                                                                                        #self.var_cpassword.get()
+                                                                                                                                                                ))
+                
+            conn.commit()
+            conn.close()
+            messagebox.showinfo('Success','Register Seccessful')
+
+
+#============================forgetpass=======================================================
+
+
+
+
+#=================school======================================================================
+
+
+
+class Student:
+    def __init__(self,root):
+        self.root=root
+        self.root.title('student')
+        self.root.minsize(width=1200,height=900)
+        #self.root.maxsize(width=900,height=900)
+#=========================================================================================
+        self.var_dep=StringVar()
+        self.var_year=StringVar()
+        self.var_sem = StringVar()
+        self.var_id = StringVar()
+        self.var_name = StringVar()
+        self.var_roll = StringVar()
+        self.var_gender = StringVar()
+        self.var_dob = StringVar()
+        self.var_email = StringVar()
+        self.var_phn = StringVar()
+        self.var_address = StringVar()
+        
+
+
+
+
+
+#==========================================================================================
+
+        bg_lb = Label(self.root,bg='yellow')
+        bg_lb.place(x=0,y=0,relwidth=1,relheight=1)
+
+        lb_t = Label(bg_lb,text='STUDENT MANAGMENT SYSTEM',font=('times new roman',30,'bold'),fg='red',bg='yellow')
+        lb_t.place(x=300,y=15)
+
+        frame = Frame(self.root,bg='white')
+        frame.place(x=200,y=80,width=880,height=600)
+
+        lft_frame = Label(frame,relief=RIDGE,bd=4,padx=2,font=('times new roman',15,'bold'),fg='red',bg='white')
+        lft_frame.place(x=10,y=5,width=430,height=590)
+
+        txt1_frame = Label(frame,text='Student Information',font=('times new roman',14,'bold'),fg='red',bg='white')
+        txt1_frame.place(x=15,y=10)
+
+        rt_frame = Label(frame,relief=RIDGE,bd=4,padx=2,font=('times new roman',15,'bold'),fg='red',bg='white')
+        rt_frame.place(x=437,y=5,width=430,height=590)
+
+        txt2_frame = Label(frame,text='Student Data',font=('times new roman',14,'bold'),fg='red',bg='white')
+        txt2_frame.place(x=448,y=10)
+
+
+        #=======================================================================================
+
+        std_lb_info = Label(frame,relief=RIDGE,bd=4,padx=2,bg='white')
+        std_lb_info.place(x=15,y=34,width=420,height=200)
+
+        txt3_frame = Label(frame,text='---------------Current Course Information--------------',font=('times new roman',14,'bold'),fg='green',bg='white')
+        txt3_frame.place(x=19,y=40)
+
+        #==========================================================================================
+
+        dep_lb = Label(frame,text='Department',font=('times new roman',14,'bold'),bg='white')
+        dep_lb.place(x=25,y=65)
+        
+        dep_com = ttk.Combobox(frame,font=('times new roman',12,'bold'),textvariable=self.var_dep)
+        dep_com['state']=('readonly')
+        dep_com['values']=('select','B.S.C(cs)','B.tech','MCA','B.S.C(Hon)')
+        dep_com.current(0)
+        dep_com.place(x=25,y=90)
+        
+
+        
+
+        year_lb = Label(frame,text='Year:',font=('times new roman',14,'bold'),bg='white')
+        year_lb.place(x=280,y=65)
+        
+        year_com = ttk.Combobox(frame,font=('times new roman',9,'bold'),textvariable = self.var_year)
+        year_com['state']=('readonly')
+        year_com['values']=('2021-2022')
+        year_com.current(0)
+        year_com.place(x=280,y=90)
+
+        
+
+        sem_lb = Label(frame,text='Semester',font=('times new roman',14,'bold'),bg='white')
+        sem_lb.place(x=25,y=130)
+        
+        sem_com = ttk.Combobox(frame,font=('times new roman',12,'bold'),textvariable = self.var_sem)
+        sem_com['state']=('readonly')
+        sem_com['values']=('Semester-1','Semester-2')
+        sem_com.current(0)
+        sem_com.place(x=25,y=155)
+
+        #========================================================================================
+        std_cls_lb = Label(lft_frame,relief=RIDGE,bd=4,padx=2,font=('times new roman',15,'bold'),fg='red',bg='white')
+        std_cls_lb.place(x=2,y=223,width=419,height=240)
+        std_cls = Label(std_cls_lb,text='Student ID',font=('times new roman',15,'bold'),bg='white')
+        std_cls.place(x=2,y=1)
+        std_ent = ttk.Entry(std_cls_lb,font=('times new roman',12,'bold'),width=18,textvariable=self.var_id)
+        std_ent.place(x=2,y=25)
+        
+
+
+        std_cls = Label(std_cls_lb,text='Student Name',font=('times new roman',15,'bold'),bg='white')
+        std_cls.place(x=195,y=1)
+        std_ent = ttk.Entry(std_cls_lb,font=('times new roman',12,'bold'),width=18,textvariable = self.var_name)
+        std_ent.place(x=195,y=25)
+
+
+
+        std_cls = Label(std_cls_lb,text='Roll No',font=('times new roman',15,'bold'),bg='white')
+        std_cls.place(x=2,y=55)
+        std_ent = ttk.Entry(std_cls_lb,font=('times new roman',12,'bold'),width=18,textvariable=self.var_roll)
+        std_ent.place(x=2,y=78)
+
+
+
+
+        std_lb = Label(std_cls_lb,text='Gender',font=('times new roman',15,'bold'),bg='white')
+        std_lb.place(x=195,y=54)
+        std_cls_box = ttk.Combobox(std_cls_lb,text='Gender',font=('times new roman',10,'bold'),textvariable=self.var_gender)
+        std_cls_box['state']=('readonly')
+        std_cls_box['values']=('select','Male','Female','Other')
+        std_cls_box.current(0)
+        std_cls_box.place(x=195,y=78)
+        #std_ent = ttk.Entry(std_cls_lb,font=('times new roman',12,'bold'),width=18)
+        #std_ent.place(x=195,y=78)
+
+
+
+
+        std_cls = Label(std_cls_lb,text='DOB',font=('times new roman',15,'bold'),bg='white')
+        std_cls.place(x=2,y=110)
+        std_ent = ttk.Entry(std_cls_lb,font=('times new roman',12,'bold'),width=18,textvariable=self.var_dob)
+        std_ent.place(x=2,y=133)
+
+
+
+        std_cls = Label(std_cls_lb,text='Email',font=('times new roman',15,'bold'),bg='white')
+        std_cls.place(x=195,y=108)
+        std_ent = ttk.Entry(std_cls_lb,font=('times new roman',12,'bold'),width=18,textvariable=self.var_email)
+        std_ent.place(x=195,y=132)
+
+
+
+        std_cls = Label(std_cls_lb,text='Phone No.',font=('times new roman',15,'bold'),bg='white')
+        std_cls.place(x=2,y=165)
+        std_ent = ttk.Entry(std_cls_lb,font=('times new roman',12,'bold'),width=18,textvariable=self.var_phn)
+        std_ent.place(x=2,y=190)
+        
+
+
+
+        std_cls = Label(std_cls_lb,text='Address',font=('times new roman',15,'bold'),bg='white')
+        std_cls.place(x=195,y=166)
+        std_ent = ttk.Entry(std_cls_lb,font=('times new roman',12,'bold'),width=18,textvariable=self.var_address)
+        std_ent.place(x=195,y=189)
+
+
+        #==========================================================================================
+
+        #bt_frame = Frame(lft_frame,bd=4,bg='white')
+        #bt_frame.place(x=200,y=430,width=100,height=80)
+
+        bt_frame = Frame(lft_frame,relief=RIDGE,bd=4,padx=2,bg='white')
+        bt_frame.place(x=2,y=462,width=420,height=120)
+
+
+
+        btn_add = Button(lft_frame,text='Save',font=('arial',10,'bold'),bg='green',fg='white',width=10,command=self.add_data)
+        btn_add.place(x=8,y=470)
+
+        btn_update = Button(lft_frame,text='Update',font=('arial',10,'bold'),bg='green',fg='white',width=10,command=self.update_data)
+        btn_update.place(x=115,y=470)
+
+
+        btn_delete = Button(lft_frame,text='Delete',font=('arial',10,'bold'),bg='green',fg='white',width=10,command=self.delete_data)
+        btn_delete.place(x=220,y=470)
+
+        btn_reset = Button(lft_frame,text='Reset',font=('arial',10,'bold'),bg='green',fg='white',width=10,command=self.reset_data)
+        btn_reset.place(x=325,y=470)
+
+        #===========================================================================================
+
+        
+
+        search_lb = Label(rt_frame,relief=RIDGE,bd=4,padx=2,bg='black')
+        search_lb.place(x=2,y=30,width=420,height=50)
+
+        #search_txt = Label(search_lb,font=('arial',10,'bold'),text='Search By:',fg='orange',bg='white')
+        #search_txt.place(x=0,y=10)
+        
+       # self.var_com_search=StringVar()
+        #com_txt = ttk.Combobox(search_lb,font=('arial',10,'bold'),width=12,textvariable = self.var_com_search)
+        #com_txt['state']=('readonly')
+       # com_txt['value']=('Select Option','ID','Roll No.','Phone No.')
+        #com_txt.place(x=80,y=10)
+        #com_txt.current(0)
+
+        #search_txt2 = Label(search_lb,font=('arial',10,'bold'),text='=',bg='white')
+        #search_txt2.place(x=190,y=10)
+        
+       # self.var_search=StringVar()
+        #search_ent = ttk.Entry(search_lb,font=('arial',10,'bold'),width=12,textvariable=self.var_search,bg='blsck')
+        #search_ent.place(x=204,y=10)
+
+
+        #search_btn = Button(search_lb,text='search',font=('arial',10,'bold'),bg='green',fg='white',width=7,command=self.search_data)
+        #search_btn.place(x=298,y=9)
+        
+
+        
+        #search_frame = Label(rt_frame,text='Search Information',font=('times new roman',14,'bold'),fg='blue',bg='white')
+        #search_frame.place(x=15,y=20)
+
+        #====================================================================================
+
+
+        f_frame= Label(rt_frame,relief=RIDGE,bd=4,padx=2,bg='white')
+        f_frame.place(x=2,y=78,width=420,height=504)
+
+
+
+        scroll_1 = ttk.Scrollbar(f_frame,orient=HORIZONTAL)
+        scroll_1.pack(side=BOTTOM,fill=X)
+        
+
+         
+        scroll_2 = ttk.Scrollbar(f_frame,orient=VERTICAL)
+        scroll_2.pack(side=RIGHT,fill=Y)
+       
+
+        self.student_table=ttk.Treeview(f_frame,column=('dep','year','sem','id','name','roll','gender','dob','email','phon','address'),xscrollcommand=scroll_1.set,yscrollcommand=scroll_2.set)
+
+
+        scroll_1.config(command=self.student_table.xview)
+        scroll_2.config(command=self.student_table.yview)
+
+
+        self.student_table.heading('dep',text='Department')
+        self.student_table.heading('year',text='Year')
+        self.student_table.heading('sem',text='Semester')
+        self.student_table.heading('id',text='ID')
+        self.student_table.heading('name',text='Name')
+        self.student_table.heading('roll',text='Roll No.')
+        self.student_table.heading('gender',text='Gender')
+        self.student_table.heading('dob',text='DOB')
+        self.student_table.heading('email',text='Email')
+        self.student_table.heading('phon',text='Phone No.')
+        self.student_table.heading('address',text='Address')
+        self.student_table['show']='headings'
+
+        self.student_table.column('dep',width=100)
+        self.student_table.column('year',width=100)
+        self.student_table.column('sem',width=100)
+        self.student_table.column('id',width=100)
+        self.student_table.column('name',width=100)
+        self.student_table.column('roll',width=100)
+        self.student_table.column('gender',width=100)
+        self.student_table.column('dob',width=100)
+        self.student_table.column('email',width=100)
+        self.student_table.column('phon',width=100)
+        self.student_table.column('address',width=100)
+        
+
+        self.student_table.pack(fill=BOTH,expand=1)
+        self.student_table.bind('<ButtonRelease>',self.get_cursor)
+        self.fetch_data()
+
+    def add_data(self):
+        if self.var_dep.get()=="" or self.var_email.get()=="" or self.var_id.get()=="":
+            messagebox.showerror('Error','All Field are Required')
+
+        else:
+            try:
+                conn=mysql.connector.connect(host='localhost',user='root',password='',database='school')
+                mycursor = conn.cursor()
+                mycursor.execute('insert into data(Department,Year,Semester,ID,Name,Roll,Gender,DOB ,Email,Phn_No,Addr) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(self.var_dep.get(),self.var_year.get(),self.var_sem.get(),self.var_id.get(),self.var_name.get(),self.var_roll.get(),self.var_gender.get(),self.var_dob.get(),self.var_email.get(),self.var_phn.get(),self.var_address.get()))                                                                                                                                                                               
+
+
+                conn.commit()
+                conn.close()
+                messagebox.showinfo ('Seccess','Student Data has been added',parent=self.root)
+            except Exception as e:
+                messagebox.showerror("Error",f"Due To:{str(e)}",parent=self.root)
+
+
+
+        
+        
+        #==========================================================================================
+
+    def fetch_data(self):
+        conn=mysql.connector.connect(host='localhost',user='root',password='',database='school')
+        mycursor = conn.cursor()
+        mycursor.execute('select * from data')
+        row = mycursor.fetchall()
+
+        if len(row)!=0:
+            self.student_table.delete(*self.student_table.get_children())
+            for i in row:
+                self.student_table.insert('',END,values=i)
+            conn.commit()
+        conn.close()
+
+    def get_cursor(self,event=""):
+       cursor_row = self.student_table.focus()
+       content=self.student_table.item(cursor_row)
+       data=content['values']
+
+       self.var_dep.set(data[0])
+       self.var_year.set(data[1])
+       self.var_sem.set(data[2])
+       self.var_id.set(data[3])
+       self.var_name.set(data[4])
+       self.var_roll.set(data[5])
+       self.var_gender.set(data[6])
+       self.var_dob.set(data[7])
+       self.var_email.set(data[8])
+       self.var_phn.set(data[9])
+       self.var_address.set(data[10])
+
+    def update_data(self):
+
+        if(self.var_dep.get()=="" or self.var_email.get()=="" or self.var_id.get()==""):
+            messagebox.showerror('Error','All field are required')
+        else:
+            try:
+                update=messagebox.askyesno('Update','Are you sure update this student data',parent=self.root)
+                if update>0:
+                    conn=mysql.connector.connect(host='localhost',user='root',password='',database='school')
+                    mycursor = conn.cursor()
+                    mycursor.execute('update data set Department=%s,Year=%s,Semester=%s,Name=%s,Roll=%s,Gender=%s,DOB=%s,Email=%s,Phn_No=%s,Addr=%s WHERE ID=%s',(
+                                                                                                                                                                    self.var_dep.get(),
+                                                                                                                                                                    self.var_year.get(),
+                                                                                                                                                                    self.var_sem.get(),
+                                                                                                                                                                    self.var_name.get(),
+                                                                                                                                                                    self.var_roll.get(),
+                                                                                                                                                                    self.var_gender.get(),
+                                                                                                                                                                    self.var_dob.get(),
+                                                                                                                                                                    self.var_email.get(),
+                                                                                                                                                                    self.var_phn.get(),
+                                                                                                                                                                    self.var_address.get(),
+                                                                                                                                                                    self.var_id.get()
+                                                                                                                                                                    
+                                                                                                                                                                    ))
+
+                else:
+                 if not update:
+                     return
+                conn.commit()
+                self.fetch_data()
+                conn.close()
+                messagebox.showinfo('Success','Student Successfuly update',parent=self.root)
+            except Exception as e:
+                messagebox.showerror("Error",f"Due To:{str(e)}",parent=self.root)
+
+
+
+#==========================Delete==============================================================
+
+    def delete_data(self):
+        if (self.var_dep.get()=="" or self.var_email.get()=="" or self.var_id.get()==""):
+            messagebox.showerror('Error','All field are required')
+        else:
+            try:
+                delete=messagebox.askyesno('Delete','Are you Sure delete this data',parent=self.root)
+                if delete>0:
+                    conn=mysql.connector.connect(host='localhost',user='root',password='',database='school')
+                    mycursor = conn.cursor()
+                    sql = 'delete from data where ID=%s'
+                    values=(self.var_id.get(),)
+                    mycursor.execute(sql,values)
+                else:
+                    if not delete:
+                        return
+                conn.commit()
+                self.fetch_data()
+                conn.close()
+                messagebox.showinfo('Delete','Your data has been Delete',parent=self.root)
+            except Exception as e:
+                messagebox.showerror("Error",f"Due To:{str(e)}",parent=self.root)
+
+#================================reset=======================================================
+
+
+
+    def reset_data(self):
+        self.var_dep.set('Select Department')
+        self.var_year.set('Select Year')
+        self.var_sem.set('Select Semester')
+        self.var_id.set('')
+        self.var_name.set('')
+        self.var_roll.set('')
+        self.var_gender.set('')
+        self.var_dob.set('')
+        self.var_email.set('')
+        self.var_phn.set('')
+        self.var_address.set('')
+
+#============================search==========================================================
+
+    def search_data(self):
+        if self.var_com_search.get()=="" or self.var_search.get()=="":
+            messagebox.showerror('Error','Please select option')
+        else:
+            conn=mysql.connector.connect(host='localhost',user='root',password='',database='school')
+            mycursor = conn.cursor()
+            mycursor.execute("select * from data where"+str(self.var_com_search.get())+" LIKE  %"+str(self.var_search.get())+" %")
+            data=mycursor.fetchall()
+            if len(data) !=0:
+                self.student_table.delete(*self.student_table.get_children())
+                for i in data:
+                    self.student_table("",END,values=i)
+                conn.commit()
+            conn.close()
+        
+        
+                    
+
+
+
+
+
+
+
+
+#if __name__=='__main__':
+    #root=Tk()
+    #obj=Student(root)
+    #root.mainloop()
+
+
+if __name__=='__main__':
+    main_window()
